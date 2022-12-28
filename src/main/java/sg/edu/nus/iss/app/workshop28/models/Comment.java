@@ -12,7 +12,14 @@ public class Comment {
     private String c_text;
     private String c_id;
     private Integer gid; // game ID
+    private String gamename;
 
+    public String getGamename() {
+        return gamename;
+    }
+    public void setGamename(String gamename) {
+        this.gamename = gamename;
+    }
     public String get_id() {
         return _id;
     }
@@ -52,11 +59,12 @@ public class Comment {
 
     @Override
     public String toString() {
-        return "user: %s, rating: %d, gid: %d, text: %s".formatted(user, rating, gid, c_text);
+        return "name: %s, user: %s, rating: %d, gid: %d, text: %s, commentId: %s".formatted(gamename, user, rating, gid, c_text, _id);
     }
 
     public static Comment create(Document d) {
         Comment c = new Comment();
+        c.setGamename(d.getString("game_name")); // does not allow name to be displayed
         c.set_id(d.getObjectId("_id").toString());
         c.setC_id(d.getString("c_id"));
         c.setGid(d.getInteger("gid"));
@@ -69,6 +77,7 @@ public class Comment {
     public JsonObject toJson() {
         return Json.createObjectBuilder()
             .add("_id", get_id())
+            .add("game_name", getGamename())
             .add("c_id", getC_id())
             .add("gid", getGid())
             .add("user", getUser())

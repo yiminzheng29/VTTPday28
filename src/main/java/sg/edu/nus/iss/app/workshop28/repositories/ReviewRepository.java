@@ -95,13 +95,11 @@ public class ReviewRepository {
         // Perform the aggregation on the collection with the defined pipleline. Results are returned as document
         AggregationResults<Document> results = mongoTemplate.aggregate(pipeline, "game", Document.class);
 
-        if(!results.iterator().hasNext()) {
-            return Optional.empty();
-        }
-
         Document doc = results.iterator().next();
         Game g = Game.create(doc);
         return Optional.of(g);
+
+        
         }
 
         public List<Comment> aggregateGamesComment(Integer limit, String username, Integer rating) {
@@ -119,7 +117,7 @@ public class ReviewRepository {
 
             LookupOperation linkReviewsGame = Aggregation.lookup("game", "gid", "gid", "gameComment");
 
-            ProjectionOperation projection = Aggregation.project("_id", "c_id", "user", "rating", "c_text", "gid")
+            ProjectionOperation projection = Aggregation.project("_id", "c_id", "user", "rating", "c_text", "gid", "name") // name does not work here since it is not in comment collections
                 .and("gameComment.name").as("game_name");
 
             LimitOperation limitRecords = Aggregation.limit(limit);
@@ -127,8 +125,8 @@ public class ReviewRepository {
             Aggregation pipeline = Aggregation.newAggregation(matchUsernameOp, linkReviewsGame, limitRecords, projection);
             AggregationResults<Comment> results = mongoTemplate.aggregate(pipeline, "comment", Comment.class);
             // retrieves from comment database
-
             return (List<Comment>) results.getMappedResults();
+            
         } 
     }
 
