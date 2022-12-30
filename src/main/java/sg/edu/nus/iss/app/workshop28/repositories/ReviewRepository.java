@@ -78,7 +78,9 @@ public class ReviewRepository {
 
         // Joins the collections based on gid and gameId
         LookupOperation linkReviewsGame = Aggregation.lookup("comment", "gid", "gid", "reviewsDocs"); 
-        // retrieves comments from the comment database
+        // retrieves comments from the comment collection
+        // localfield gid is from comment collection
+        // foreignField gid is from game collection
 
         // Projection can be used for suppressing fields / adding new fields. Commonly used to reduce result size and transform structure of document
         ProjectionOperation projection = Aggregation.project("_id", "gid", "name", "year", "ranking", "users_rated", "url", "image")
@@ -93,7 +95,7 @@ public class ReviewRepository {
         Aggregation pipeline = Aggregation.newAggregation(matchGameId, linkReviewsGame, projection, newFieldOps);
         
         // Perform the aggregation on the collection with the defined pipleline. Results are returned as document
-        AggregationResults<Document> results = mongoTemplate.aggregate(pipeline, "game", Document.class);
+        AggregationResults<Document> results = mongoTemplate.aggregate(pipeline, "game", Document.class); // retrieves results from game collections
 
         Document doc = results.iterator().next();
         Game g = Game.create(doc);
@@ -124,7 +126,7 @@ public class ReviewRepository {
 
             Aggregation pipeline = Aggregation.newAggregation(matchUsernameOp, linkReviewsGame, limitRecords, projection);
             AggregationResults<Comment> results = mongoTemplate.aggregate(pipeline, "comment", Comment.class);
-            // retrieves from comment database
+            // retrieves from comment collection
             return (List<Comment>) results.getMappedResults();
             
         } 
