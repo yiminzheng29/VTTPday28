@@ -84,7 +84,7 @@ public class ReviewRepository {
 
         // Projection can be used for suppressing fields / adding new fields. Commonly used to reduce result size and transform structure of document
         ProjectionOperation projection = Aggregation.project("_id", "gid", "name", "year", "ranking", "users_rated", "url", "image")
-            .and("reviewsDocs._id").as("reviews"); // reviews word to match with the Game.java under create
+            .and("reviewsDocs").as("reviews"); // reviews word to match with the Game.java under create
 
         AddFieldsOperationBuilder addFieldOpsBld = Aggregation.addFields();
         addFieldOpsBld.addFieldWithValue("timestamp", LocalDateTime.now());
@@ -119,16 +119,20 @@ public class ReviewRepository {
 
             LookupOperation linkReviewsGame = Aggregation.lookup("game", "gid", "gid", "gameComment");
 
-            ProjectionOperation projection = Aggregation.project("_id", "c_id", "user", "rating", "c_text", "gid", "name") // name does not work here since it is not in comment collections
+            ProjectionOperation projection = Aggregation.project("_id", "c_id", "user", "rating", "c_text", "gid", "name") // name of game is now saved as game_name
                 .and("gameComment.name").as("game_name");
 
             LimitOperation limitRecords = Aggregation.limit(limit);
 
             Aggregation pipeline = Aggregation.newAggregation(matchUsernameOp, linkReviewsGame, limitRecords, projection);
-            AggregationResults<Comment> results = mongoTemplate.aggregate(pipeline, "comment", Comment.class);
+            AggregationResults<Document> results = mongoTemplate.aggregate(pipeline, "comment", Document.class); // changed from Comment.class to Document.class as it is necessary to reflect the name
             // retrieves from comment collection
-            return (List<Comment>) results.getMappedResults();
-            
+            List<Document> docs = results.getMappedResults();
+            List<Comment> comments = new LinkedList<>();
+            for (Document d: docs) {
+                comments.add(Comment.create(d));
+            }
+            return comments;
         } 
     }
 

@@ -102,8 +102,8 @@ public class Game {
         List reviewsIdArr = (ArrayList)d.get("reviews"); 
         List newReviewsId = new LinkedList<>();
         for (Object a:reviewsIdArr) {
-            ObjectId oa = (ObjectId) a;
-            newReviewsId.add("/review/" + oa.toString());
+            // ObjectId oa = (ObjectId) a;
+            newReviewsId.add("/review/" + a.toString()); // to show ALL reviews description
         }
         g.setGid(d.getInteger("gid"));
         g.setName(d.getString("name"));

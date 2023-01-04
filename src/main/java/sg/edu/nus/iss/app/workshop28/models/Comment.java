@@ -64,7 +64,7 @@ public class Comment {
 
     public static Comment create(Document d) {
         Comment c = new Comment();
-        c.setGamename(d.getString("game_name")); // does not allow name to be displayed
+        c.setGamename(d.get("game_name").toString()); // does not allow name to be displayed
         c.set_id(d.getObjectId("_id").toString());
         c.setC_id(d.getString("c_id"));
         c.setGid(d.getInteger("gid"));
