@@ -1,6 +1,7 @@
 package sg.edu.nus.iss.app.workshop28.repositories;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -19,6 +20,7 @@ import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
 import org.springframework.data.mongodb.core.aggregation.AddFieldsOperation; // to add this
 import org.springframework.data.mongodb.core.aggregation.AddFieldsOperation.AddFieldsOperationBuilder;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
 import sg.edu.nus.iss.app.workshop28.models.Comment;
@@ -134,6 +136,49 @@ public class ReviewRepository {
             }
             return comments;
         } 
+
+        // for adding date as a query based on ISO date
+        public Optional<Game> getGamesByCommentDate(String gid, String date) {
+
+            String str = date.concat(" 00:00");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            LocalDateTime dateTime = LocalDateTime.parse(str, formatter);
+    
+            Criteria c = Criteria.where("posted").gt(dateTime);
+    
+            Query query = Query.query(c);
+    
+            List<Document> docs = mongoTemplate.find(query, Document.class, "reviews");
+            System.out.println(docs.toString());
+    
+            MatchOperation matchGameId = Aggregation.match(Criteria.where("gid").is(Integer.parseInt(gid)));
+    
+            LookupOperation linkReviewsGame = Aggregation.lookup("reviews",
+                    "gid", "gameId", "reviewsDocs");
+    
+            ProjectionOperation projection = Aggregation
+                    .project("_id", "gid", "name", "year", "ranking",
+                            "users_rated", "url", "image")
+                    .and("reviewsDocs").as("reviews");
+    
+            AddFieldsOperationBuilder addFieldOpsBld = Aggregation.addFields();
+            addFieldOpsBld.addFieldWithValue("timestamp", LocalDateTime.now());
+            addFieldOpsBld.addField(docs.toString());
+            AddFieldsOperation newFieldOps = addFieldOpsBld.build();
+            
+    
+            Aggregation pipeline = Aggregation
+                    .newAggregation(matchGameId, linkReviewsGame, projection, newFieldOps);
+            AggregationResults<Document> results = mongoTemplate
+                    .aggregate(pipeline, "game", Document.class);
+            if (!results.iterator().hasNext())
+                return Optional.empty();
+    
+            Document doc = results.iterator().next();
+            Game g = Game.create(doc);
+            return Optional.of(g);
+    
+        }
     }
 
     
